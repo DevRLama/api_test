@@ -1,8 +1,8 @@
 import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Dashboard extends StatefulWidget {
   @override
@@ -10,7 +10,6 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-
   File? file;
 
   @override
@@ -89,15 +88,15 @@ class _DashboardState extends State<Dashboard> {
                         borderSide: BorderSide(color: Colors.black))),
               ),
               TextFormField(
-                validator: (value) {
-                  bool passValid = RegExp(
-                          r'^(?=.?[A-Z])(?=.?[a-z])(?=.?[0-9])(?=.?[!@#\$&*~]).{8,}$')
-                      .hasMatch(value!);
-                  if (!passValid) {
-                    return "Enter valid password. Atleast 8 character(One uppercase,One numeric and One special character )";
-                  }
-                  return null;
-                },
+                // validator: (value) {
+                //   bool passValid = RegExp(
+                //           r'^(?=.?[A-Z])(?=.?[a-z])(?=.?[0-9])(?=.?[!@#\$&*~]).{8,}$')
+                //       .hasMatch(value!);
+                //   if (!passValid) {
+                //     return "Enter valid password. Atleast 8 character(One uppercase,One numeric and One special character )";
+                //   }
+                //   return null;
+                // },
                 obscureText: true,
                 controller: passController,
                 decoration: InputDecoration(
@@ -113,19 +112,17 @@ class _DashboardState extends State<Dashboard> {
                   final XFile? image =
                       await _picker.pickImage(source: ImageSource.gallery);
                   setState(() {
-
                     file = File(image!.path);
-
-
                   });
                 },
-                child: file != null? CircleAvatar(
+                child: file != null
+                    ? CircleAvatar(
                         foregroundImage: FileImage(file!),
                         radius: 100,
                         // child: file!=null ?Image.file(file!) : Image.asset('assets/user.png'),
                       )
                     : CircleAvatar(
-                        foregroundImage:AssetImage('assets/avatar.jpg'),
+                        foregroundImage: AssetImage('assets/avatar.jpg'),
                         radius: 100,
                       ),
                 // child: Container(
@@ -137,45 +134,90 @@ class _DashboardState extends State<Dashboard> {
                 //
                 // ),
               ),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.blue,
-                    width: 2,
-                  ),
-                ),
-                child: TextButton(
-                    onPressed: () async {
-                      bool isValid = formKey.currentState?.validate() ?? false;
-                      if (isValid) {
-                        name = nameController.text;
-                        phone = phoneController.text;
-                        email = emailController.text;
-                        password = passController.text;
-                        print(name);
-                        print(phone);
-                        print(email);
-                        print(password);
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  TextButton(
+                      onPressed: () async {
+                        bool isValid =
+                            formKey.currentState?.validate() ?? false;
+                        if (isValid) {
+                          name = nameController.text;
+                          phone = phoneController.text;
+                          email = emailController.text;
+                          password = passController.text;
+                          print(name);
+                          print(phone);
+                          print(email);
+                          print(password);
 
-                        var body = {
-                          "name": name,
-                          "phone": phone,
-                          "email": email,
-                          "password": password
-                        };
-                        var dio = Dio();
-                        Response response = await dio.post(
-                            "https://bazz.techdocklabs.com/api/register-testuser",
-                            data: body);
-                        print(response.statusMessage);
-                      } //if body
-                    },
-                    child: const Text("Submit")),
-              )
+                          var body = {
+                            "name": name,
+                            "phone": phone,
+                            "email": email,
+                            "password": password
+                          };
+                          var dio = Dio();
+                          Response response = await dio.post(
+                              "https://bazz.techdocklabs.com/api/register-testuser",
+                              data: body);
+                          await setPreferences(name!,phone!,email!);
+
+                          print(response.statusMessage);
+                        }
+                        //if body
+                      },
+                      child: const Text("Submit")),
+                  TextButton(
+                      onPressed: () async {
+                        // Obtain shared preferences.
+
+                     await getPreferences();
+
+
+                        // Save an String value to 'action' key.
+
+
+                      },
+                      child: const Text("Get Details"))
+                ],
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+
+
+  Future<void> setPreferences(String name,String phone,String email)async{
+
+    // Obtain shared preferences.
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('name', name);
+    await prefs.setString('phone', phone);
+    await prefs.setString('email', email);
+
+  }
+
+  Future<void> getPreferences()async{
+
+    // Obtain shared preferences.
+    final prefs = await SharedPreferences.getInstance();
+
+    // Try reading data from the 'action' key. If it doesn't exist, returns null.
+    final String? name = prefs.getString('name');
+    final String? phone = prefs.getString('phone');
+    final String? email = prefs.getString('email');
+
+
+    print(name);
+    print(phone);
+    print(email);
+
+
   }
 }
